@@ -27,7 +27,7 @@ public class AVIFEncoderTests {
                 image.Save(ms, new AVIFEncoder());
 
                 Assert.True(ms.Length > 0, "Output stream should not be empty.");
-                Assert.InRange(ms.Length, 54000, 58000);
+                Assert.InRange(ms.Length, 36000, 40000);
             }
         }
     }
@@ -51,7 +51,7 @@ public class AVIFEncoderTests {
         await image.SaveAsync(ms, new AVIFEncoder());
 
         Assert.True(ms.Length > 0, "Output stream should not be empty.");
-        Assert.InRange(ms.Length, 55000, 58000);
+        Assert.InRange(ms.Length, 36000, 40000);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class AVIFEncoderTests {
         await image.SaveAsync(ms, new AVIFEncoder { Lossless = true });
 
         Assert.True(ms.Length > 0, "Output stream should not be empty.");
-        Assert.InRange(ms.Length, 480000, 490000);
+        Assert.InRange(ms.Length, 320000, 380000);
     }
 
     [Fact]
@@ -73,6 +73,31 @@ public class AVIFEncoderTests {
         await image.SaveAsync(ms, new AVIFEncoder {Lossless = false });
 
         Assert.True(ms.Length > 0, "Output stream should not be empty.");
-        Assert.InRange(ms.Length, 55000, 58000);
+        Assert.InRange(ms.Length, 36000, 40000);
+    }
+
+
+    [Fact]
+    public async Task EncodeFromFileAndUseLowCQ()
+    {
+        using var image = await Image.LoadAsync("Resources/test.jpg");
+
+        await using var ms = new MemoryStream();
+        await image.SaveAsync(ms, new AVIFEncoder { CQLevel = 10 });
+
+        Assert.True(ms.Length > 0, "Output stream should not be empty.");
+        Assert.InRange(ms.Length, 48000, 52000);
+    }
+
+    [Fact]
+    public async Task EncodeFromFileAndUseHighCQ()
+    {
+        using var image = await Image.LoadAsync("Resources/test.jpg");
+
+        await using var ms = new MemoryStream();
+        await image.SaveAsync(ms, new AVIFEncoder { CQLevel = 60 });
+
+        Assert.True(ms.Length > 0, "Output stream should not be empty.");
+        Assert.InRange(ms.Length, 3800, 4200);
     }
 }

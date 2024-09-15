@@ -1,6 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
@@ -20,75 +25,61 @@ public class AVIFEncoder : IImageEncoder {
 
     public bool SkipMetadata { get; init; } = false;
 
-    public void Encode<TPixel>(Image<TPixel> image, Stream stream) where TPixel : unmanaged, IPixel<TPixel> {
-        var tempPath = Path.GetTempPath();
-        var randomId = Guid.NewGuid();
-        var randomIdPath = Path.Combine(tempPath, randomId.ToString());
+    /// <summary>
+    /// CQLevel from 0 to 63 (default = 18) lower value = better quality (controls amount of quantization)
+    /// If Lossless is set to true, this value will be ignored.
+    /// </summary>
+    public int CQLevel { get; set; } = 18;
 
-        var processArguments = $"{randomIdPath}.png {randomIdPath}.avif";
-
-
-        if(Lossless) {
-            processArguments = $"--lossless {randomIdPath}.png {randomIdPath}.avif";
-        }
-
-        var psi = new ProcessStartInfo {
-            FileName = Native.CAVIF,
-            Arguments = processArguments,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true
-        };
-
-        try {
-            image.SaveAsPng($"{randomIdPath}.png");
-
-            var process = Process.Start(psi);
-            process.WaitForExit((Int32)TimeSpan.FromSeconds(20).TotalMilliseconds);
-
-            using(var fs = File.OpenRead($"{randomIdPath}.avif")) {
-                fs.CopyTo(stream);
-            }
-        } finally {
-            if(File.Exists($"{randomIdPath}.png"))
-                File.Delete($"{randomIdPath}.png");
-
-            if(File.Exists($"{randomIdPath}.avif"))
-                File.Delete($"{randomIdPath}.avif");
-        }
-    }
+    public void Encode<TPixel>(Image<TPixel> image, Stream stream) where TPixel : unmanaged, IPixel<TPixel> =>
+        EncodeAsync(image, stream, CancellationToken.None).Wait();
 
     public async Task EncodeAsync<TPixel>(Image<TPixel> image, Stream stream, CancellationToken cancellationToken) where TPixel : unmanaged, IPixel<TPixel> {
         var tempPath = Path.GetTempPath();
         var randomId = Guid.NewGuid();
         var randomIdPath = Path.Combine(tempPath, randomId.ToString());
 
-        var processArguments = $"{randomIdPath}.png {randomIdPath}.avif";
+        var arguments = new List<string>();
 
-        if(Lossless) {
-            processArguments = $"--lossless {randomIdPath}.png {randomIdPath}.avif";
+        if (Lossless)
+            arguments.Add("--lossless");
+        else
+        {
+            // --min 0 --max 63 -a end-usage=q -a cq-level=18 -a tune=ssim
+            arguments.Add("--min 0");
+            arguments.Add("--max 63");
+            arguments.Add("-a end-usage=q");
+            arguments.Add($"-a cq-level={CQLevel.ToString(CultureInfo.InvariantCulture)}");
+            arguments.Add("-a tune=ssim");
         }
 
-        var psi = new ProcessStartInfo {
+        arguments.Add($"{randomIdPath}.png");
+        arguments.Add($"{randomIdPath}.avif");
+
+        var psi = new ProcessStartInfo
+        {
             FileName = Native.CAVIF,
-            Arguments = processArguments,
+            Arguments = string.Join(' ', arguments),
             RedirectStandardInput = true,
             RedirectStandardOutput = true
         };
 
-        try {
-            image.SaveAsPng($"{randomIdPath}.png");
+        try
+        {
+            await image.SaveAsPngAsync($"{randomIdPath}.png", cancellationToken);
 
             var process = Process.Start(psi);
-            process.WaitForExit((Int32)TimeSpan.FromSeconds(20).TotalMilliseconds);
+            await process.WaitForExitAsync(cancellationToken);
 
-            using(var fs = File.OpenRead($"{randomIdPath}.avif")) {
-                await fs.CopyToAsync(stream).ConfigureAwait(false);
-            }
-        } finally {
-            if(File.Exists($"{randomIdPath}.png"))
+            using var fs = File.OpenRead($"{randomIdPath}.avif");
+            await fs.CopyToAsync(stream, cancellationToken);
+        }
+        finally
+        {
+            if (File.Exists($"{randomIdPath}.png"))
                 File.Delete($"{randomIdPath}.png");
 
-            if(File.Exists($"{randomIdPath}.avif"))
+            if (File.Exists($"{randomIdPath}.avif"))
                 File.Delete($"{randomIdPath}.avif");
         }
     }
