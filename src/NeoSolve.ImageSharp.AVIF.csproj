@@ -4,7 +4,7 @@
     <Version>1.1.0</Version>
     <Description>Avif encoding support via avifenc binary (included) for ImageSharp</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
