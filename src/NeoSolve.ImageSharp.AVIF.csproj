@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.1.0</Version>
-    <Description>Avif encoding support via avifenc binary (included) for ImageSharp</Description>
+    <Version>1.2.1</Version>
+    <Description>Avif encoding and decoding support via avifenc/avifdec binary (included) for ImageSharp</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <TargetFramework>net8.0</TargetFramework>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
