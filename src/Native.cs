@@ -5,7 +5,8 @@ using System.Runtime.InteropServices;
 namespace NeoSolve.ImageSharp.AVIF;
 
 public static class Native {
-    public static string CAVIF => Path.Combine("native", OSFolder, "avifenc") + ExecutableExtension;
+    public static string CAVIFENC => Path.Combine("native", OSFolder, "avifenc") + ExecutableExtension;
+    public static string CAVIFDEC => Path.Combine("native", OSFolder, "avifdec") + ExecutableExtension;
 
     private static string OSFolder {
         get {

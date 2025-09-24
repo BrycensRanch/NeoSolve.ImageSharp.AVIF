@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
@@ -58,7 +55,7 @@ public class AVIFEncoder : IImageEncoder {
 
         var psi = new ProcessStartInfo
         {
-            FileName = Native.CAVIF,
+            FileName = Native.CAVIFENC,
             Arguments = string.Join(' ', arguments),
             RedirectStandardInput = true,
             RedirectStandardOutput = true
