@@ -55,15 +55,15 @@ jobs:
         uses: mlugg/setup-zig@v2
       - name: Set triplet
         run: echo "TRIPLET=$(echo ${{ runner.arch }} | tr '[:upper:]' '[:lower:]')-windows-static" >> $GITHUB_ENV
-      - name: Install libraries
-        if: runner.os == 'Windows'
-        uses: johnwason/vcpkg-action@v7
-        id: vcpkg
-        with:
-          pkgs: libjpeg-turbo libpng zlib
-          triplet: ${{ env.TRIPLET }}
-          token: ${{ github.token }}
-          cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
+#      - name: Install libraries
+#        if: runner.os == 'Windows'
+#        uses: johnwason/vcpkg-action@v7
+#        id: vcpkg
+#        with:
+#          pkgs: libjpeg-turbo libpng zlib
+#          triplet: ${{ env.TRIPLET }}
+#          token: ${{ github.token }}
+#          cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
 
       - name: Build libavif binaries
         shell: bash
