@@ -58,13 +58,15 @@ jobs:
       - name: Set up Zig (for cross builds)
         if: matrix.target != 'default'
         uses: mlugg/setup-zig@v2
+      - name: Set triplet
+        run: echo "TRIPLET=$(echo ${{ runner.arch }} | tr '[:upper:]' '[:lower:]')-windows-release" >> $GITHUB_ENV
       - name: Install libraries
         if: runner.os == 'Windows'
         uses: johnwason/vcpkg-action@v7
         id: vcpkg
         with:
           pkgs: libjpeg-turbo libpng zlib
-          triplet: ${{ toLower(format('{0}-windows-release', runner.arch)) }}
+          triplet: ${{ env.TRIPLET }}
           token: ${{ github.token }}
           cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
 
@@ -89,6 +91,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target == 'default' && toLower(format('{0}-{1}', runner.os, runner.arch)) || matrix.target }}
+          name: ${{runner.os}}-${{runner.arch}}
           path: "libavif/build/avif*"
           if-no-files-found: error
