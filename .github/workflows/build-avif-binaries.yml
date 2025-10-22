@@ -82,7 +82,7 @@ jobs:
 
           if [ "${{ runner.os }}" = "Windows" ]; then
             # Switch to clang-cl and add Windows-specific options
-#            CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
+            # CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
             CMAKE_ARGS="$CMAKE_ARGS \
             -DAVIF_JPEG=LOCAL \
             -DAVIF_ZLIBPNG=LOCAL"
