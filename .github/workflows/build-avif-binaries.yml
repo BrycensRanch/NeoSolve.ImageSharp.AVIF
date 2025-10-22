@@ -101,12 +101,14 @@ jobs:
           ARTIFACTS=""
           for f in libavif/build/avif*; do
             if [[ -f "$f" && "$f" != *.* ]]; then
-              ARTIFACTS="$ARTIFACTS $f"
+              ARTIFACTS="$ARTIFACTS
+              $f"
             fi
           done
           for f in libavif/build/Release/avif*.exe; do
             if [[ -f "$f" ]]; then
-              ARTIFACTS="$ARTIFACTS $f"
+              ARTIFACTS="$ARTIFACTS
+              $f"
             fi
           done
           echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
