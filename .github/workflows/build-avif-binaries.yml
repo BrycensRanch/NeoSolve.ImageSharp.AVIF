@@ -94,12 +94,22 @@ jobs:
           cmake -S libavif -B libavif/build $CMAKE_ARGS
           cmake --build libavif/build --config Release --parallel
 
-
+      - name: Collect avif binaries
+        id: collect-avif
+        run: |
+          ARTIFACTS=""
+          for f in libavif/build/avif*; do
+            if [[ -f "$f" && "$f" != *.* ]]; then
+              ARTIFACTS="$ARTIFACTS $f"
+            fi
+          done
+          echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{runner.os}}-${{runner.arch}}
           path: |
-            libavif/build/avif*
-            libavif/build/Release*
+            ${{ env.ARTIFACTS }}
+            libavif/build/Release/avif*.exe
           if-no-files-found: error
