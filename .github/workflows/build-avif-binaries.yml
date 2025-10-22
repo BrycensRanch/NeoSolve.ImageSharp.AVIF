@@ -59,7 +59,7 @@ jobs:
         if: matrix.target != 'default'
         uses: mlugg/setup-zig@v2
       - name: Set triplet
-        run: echo "TRIPLET=$(echo ${{ runner.arch }} | tr '[:upper:]' '[:lower:]')-windows-release" >> $GITHUB_ENV
+        run: echo "TRIPLET=$(echo ${{ runner.arch }} | tr '[:upper:]' '[:lower:]')-windows-static" >> $GITHUB_ENV
       - name: Install libraries
         if: runner.os == 'Windows'
         uses: johnwason/vcpkg-action@v7
