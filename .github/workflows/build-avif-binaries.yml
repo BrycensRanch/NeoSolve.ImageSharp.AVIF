@@ -42,12 +42,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential nasm cmake ninja-build libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev
-      - name: Install LLVM and Clang
-        if: matrix.target == 'default' && runner.os == 'Linux'
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "10.0"
+          sudo apt-get install -y build-essential nasm cmake ninja-build libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev clang
       - name: Setup cmake
         if: runner.os != 'Linux'
         uses: jwlawson/actions-setup-cmake@v2
