@@ -68,18 +68,27 @@ jobs:
       - name: Build libavif binaries
         shell: bash
         run: |
-          cmake -S libavif -B libavif/build \
-          -DCMAKE_BUILD_TYPE=Release \
+          CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release \
           -DBUILD_SHARED_LIBS=OFF \
           -DAVIF_CODEC_AOM=LOCAL \
           -DCONFIG_PIC=1 \
           -DAVIF_LIBYUV=LOCAL \
           -DAVIF_LIBSHARPYUV=LOCAL \
           -DAVIF_BUILD_APPS=ON \
-          -DCMAKE_C_COMPILER="clang" \
-          -DCMAKE_CXX_COMPILER="clang++" \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
           -DCMAKE_C_COMPILER_WORKS=1 \
-          -DCMAKE_CXX_COMPILER_WORKS=1
+          -DCMAKE_CXX_COMPILER_WORKS=1"
+
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            # Switch to clang-cl and add Windows-specific options
+            CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
+            CMAKE_ARGS="$CMAKE_ARGS \
+            -DAVIF_JPEG=LOCAL \
+            -DAVIF_ZLIBPNG=LOCAL"
+          fi
+
+          cmake -S libavif -B libavif/build $CMAKE_ARGS
           cmake --build libavif/build --config Release --parallel
 
 
