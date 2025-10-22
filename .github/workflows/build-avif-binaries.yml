@@ -53,12 +53,12 @@ jobs:
       - name: Set up Zig (for cross builds)
         if: matrix.target != 'default'
         uses: mlugg/setup-zig@v2
-      - name: Set triplet
-        run: echo "TRIPLET=$(echo "${{ runner.arch }}" | tr '[:upper:]' '[:lower:]')-windows" >> $GITHUB_ENV
       - name: Install libraries
         if: runner.os == 'Windows'
         uses: johnwason/vcpkg-action@v7
         id: vcpkg
+        env:
+          TRIPLET: ${{ runner.arch == 'X64' && 'x64-windows' || 'arm64-windows' }}
         with:
           token: ${{ github.token }}
           cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
