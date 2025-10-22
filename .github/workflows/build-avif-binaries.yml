@@ -96,6 +96,7 @@ jobs:
 
       - name: Collect avif binaries
         id: collect-avif
+        shell: bash
         run: |
           ARTIFACTS=""
           for f in libavif/build/avif*; do
