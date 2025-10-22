@@ -4,35 +4,88 @@ on:
   workflow_dispatch: # Allows manual triggering  
 
 jobs:
-  build-arm64:
-    runs-on: ubuntu-24.04-arm
+  build:
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-26, macos-15-intel, windows-2025, windows-11-arm ]
+        target: [ default ] 
+#        include:
+#          - os: ubuntu-24.04
+#            target: linux-musl-x64
+#          - os: ubuntu-24.04
+#            target: linux-musl-x86
+#          - os: ubuntu-24.04
+#            target: linux-x86
+#          - os: ubuntu-24.04-arm
+#            target: linux-musl-arm64
+#          - os: ubuntu-24.04-arm
+#            target: linux-arm32
+#          - os: ubuntu-24.04-arm
+#            target: linux-musl-arm32
+#          - os: windows-2025
+#            target: win-x86
+#          - os: windows-11-arm
+#            target: win-arm
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
 
-      - name: Install dependencies
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential nasm cmake ninja-build libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev
+      - name: Install LLVM and Clang
+        if: matrix.target == 'default'
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "10.0"
+      - name: Setup cmake
+        if: runner.os != 'Linux'
+        uses: jwlawson/actions-setup-cmake@v2
+      - name: Set up nasm
+        if: runner.os != 'Linux'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Set up Zig (for cross builds)
+        if: matrix.target != 'default'
+        uses: mlugg/setup-zig@v2
+      - name: Install libraries
+        if: runner.os == 'Windows'
+        uses: johnwason/vcpkg-action@v7
+        id: vcpkg
+        with:
+          pkgs: libjpeg-turbo libpng zlib
+          triplet: ${{ toLower(format('{0}-windows-release', runner.arch)) }}
+          token: ${{ github.token }}
+          cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
 
       - name: Build libavif binaries
+        shell: bash
         run: |
-          cd libavif
-          mkdir -p build
-          cd build
-          cmake -DBUILD_SHARED_LIBS=OFF -DCONFIG_PIC=1 -DCMAKE_BUILD_TYPE=Release -DAVIF_CODEC_AOM=LOCAL -DAVIF_LIBYUV=LOCAL -DAVIF_BUILD_APPS=ON -G Ninja ..
-          ninja
+          cmake -S libavif -B libavif/build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DAVIF_CODEC_AOM=LOCAL \
+          -DCONFIG_PIC=1 \
+          -DAVIF_LIBYUV=LOCAL \
+          -DAVIF_LIBSHARPYUV=LOCAL \
+          -DAVIF_BUILD_APPS=ON \
+          -DCMAKE_C_COMPILER="clang" \
+          -DCMAKE_CXX_COMPILER="clang++" \
+          -DCMAKE_C_COMPILER_WORKS=1 \
+          -DCMAKE_CXX_COMPILER_WORKS=1
+          cmake --build libavif/build --config Release --parallel
+
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: c-native-artifact
-          path: |
-            libavif/build/avifenc
-            libavif/build/avifdec
+          name: ${{ matrix.target == 'default' && toLower(format('{0}-{1}', runner.os, runner.arch)) || matrix.target }}
+          path: "libavif/build/avif*"
           if-no-files-found: error
-          # Retain artifacts for 1 day
-          retention-days: 1
-
