@@ -6,7 +6,6 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <TargetFramework>net8.0</TargetFramework>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -17,12 +16,18 @@
     <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
+    <Target Name="_IncludeRuntimesPackageFiles" BeforeTargets="_GetPackageFiles">
+        <ItemGroup>
+            <None Include="@(PackageFile)" Pack="True" />
+        </ItemGroup>
+    </Target>
+    
   <ItemGroup>
       <!-- Windows -->
-      <NativeAssetPackageFile Include="..\output\native\windows\x64\avif*" RuntimeIdentifier="win-x64" />
-      <NativeAssetPackageFile Include="..\output\native\windows\x86\avif*" RuntimeIdentifier="win-x86" />
-      <NativeAssetPackageFile Include="..\output\native\windows\arm\avif*" RuntimeIdentifier="win-arm" />
-      <NativeAssetPackageFile Include="..\output\native\windows\arm64\avif*" RuntimeIdentifier="win-arm64" />
+      <PackageFile Include="..\output\native\windows\x64\avif*" PackagePath="runtimes\win-x64\native\%(Filename)%(Extension)" />
+      <PackageFile Include="..\output\native\windows\x86\avif*" PackagePath="runtimes\win-x86\native\%(Filename)%(Extension)" />
+      <PackageFile Include="..\output\native\windows\arm\avif*" PackagePath="runtimes\win-arm\native\%(Filename)%(Extension)" />
+      <PackageFile Include="..\output\native\windows\arm64\avif*" PackagePath="runtimes\win-arm64\native\%(Filename)%(Extension)" />
       
       <!-- macOS -->
       <PackageFile Include="..\output\native\osx\arm64\avif*" PackagePath="runtimes\osx-x64\native\%(Filename)%(Extension)" />
