@@ -98,6 +98,9 @@ jobs:
         id: collect-avif
         shell: bash
         run: |
+          rm -f libavif/build/avifgain* libavif/build/*.c || true
+          rm -f libavif/build/Release/avifgain* libavif/build/Release/*.c || true
+
           ARTIFACTS=""
           for f in libavif/build/avif*; do
             if [[ -f "$f" && "$f" != *.* ]]; then
@@ -110,6 +113,7 @@ jobs:
             fi
           done
           echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
+
           
       - name: Upload artifact
         uses: actions/upload-artifact@v5
