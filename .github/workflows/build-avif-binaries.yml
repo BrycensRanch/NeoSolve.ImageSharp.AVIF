@@ -112,8 +112,81 @@ jobs:
           echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
           
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{runner.os}}-${{runner.arch}}
           path: ${{ env.ARTIFACTS }}
+          if-no-files-found: error
+  nuget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+      - uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+      - name: Display structure of downloaded files
+        run: ls -R
+      - name: Install libs for test
+        run: sudo apt-get update && sudo apt-get install -y libyuv0 libavif-bin
+      - name: Organize artifacts into runtime layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output/native
+
+          # Helper to detect if ELF uses musl
+          is_musl() {
+            local f="$1"
+            if file "$f" 2>/dev/null | grep -q ELF; then
+              if readelf -l "$f" 2>/dev/null | grep -q musl; then
+                return 0
+              fi
+            fi
+            return 1
+          }
+
+          for dir in artifacts/*; do
+            [ -d "$dir" ] || continue
+            name="$(basename "$dir")"
+            os="$(echo "$name" | cut -d- -f1 | tr '[:upper:]' '[:lower:]')"
+            arch="$(echo "$name" | cut -d- -f2 | tr '[:upper:]' '[:lower:]')"
+
+            # Determine runtime identifier family
+            case "$os" in
+              windows) rid_family="win" ;;
+              macos)   rid_family="osx" ;;
+              linux)
+                # try to detect musl if any ELF file inside says so
+                if find "$dir" -type f -exec file {} + | grep -q ELF; then
+                  first_elf="$(find "$dir" -type f -exec file {} + | grep ELF | head -n1 | cut -d: -f1)"
+                  if [ -n "$first_elf" ] && is_musl "$first_elf"; then
+                    rid_family="linux-musl"
+                  else
+                    rid_family="linux"
+                  fi
+                else
+                  rid_family="linux"
+                fi
+                ;;
+              *) echo "Unknown OS: $os" && exit 1 ;;
+            esac
+
+            dest="output/native/${rid_family}/${arch}"
+            mkdir -p "$dest"
+            mv "$dir"/* "$dest/"
+          done
+      - name: Show organized output structure
+        run: tree output/native || find output/native
+      - name: Pack Nuget
+        run: "dotnet pack -c Release -o nuget"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: Nuget
+          path: nuget/**.nupkg
           if-no-files-found: error
