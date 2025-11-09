@@ -13,37 +13,47 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\"/>
+    <None Include="README.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 
     <Target Name="_IncludeRuntimesPackageFiles" BeforeTargets="_GetPackageFiles">
         <ItemGroup>
-            <None Include="@(PackageFile)" Pack="True" />
+            <None Include="@(PackageFile)">
+                <Pack>true</Pack>
+                <PackagePath>%(PackageFile.PackagePath)</PackagePath>
+                <Visible>false</Visible>
+            </None>
+            <None Include="*.c">
+                <Pack>false</Pack>
+            </None>
+            <None Include="*avifgain*">
+                <Pack>false</Pack>
+            </None>
         </ItemGroup>
     </Target>
     
   <ItemGroup>
       <!-- Windows -->
-      <PackageFile Include="..\output\native\windows\x64\avif*" PackagePath="runtimes\win-x64\native\%(Filename)%(Extension)" />
-      <PackageFile Include="..\output\native\windows\x86\avif*" PackagePath="runtimes\win-x86\native\%(Filename)%(Extension)" />
-      <PackageFile Include="..\output\native\windows\arm\avif*" PackagePath="runtimes\win-arm\native\%(Filename)%(Extension)" />
-      <PackageFile Include="..\output\native\windows\arm64\avif*" PackagePath="runtimes\win-arm64\native\%(Filename)%(Extension)" />
+      <PackageFile Include="../output/native/windows/x64/avif*" PackagePath="runtimes/win-x64/native" />
+      <PackageFile Include="../output/native/windows/x86/avif*" PackagePath="runtimes/win-x86/native" />
+      <PackageFile Include="../output/native/windows/arm/avif*" PackagePath="runtimes/win-arm/native" />
+      <PackageFile Include="../output/native/windows/arm64/avif*" PackagePath="runtimes/win-arm64/native" />
       
       <!-- macOS -->
-      <PackageFile Include="..\output\native\osx\arm64\avif*" PackagePath="runtimes\osx-x64\native\%(Filename)" />
-      <PackageFile Include="..\output\native\osx\x64\avif*" PackagePath="runtimes\osx-arm64\native\%(Filename)" />
+      <PackageFile Include="../output/native/osx/arm64/avif*" PackagePath="runtimes/osx-x64/native" />
+      <PackageFile Include="../output/native/osx/x64/avif*" PackagePath="runtimes/osx-arm64/native" />
       
       <!-- Linux -->
       <!-- glibc -->
-      <PackageFile Include="..\output\native\linux\x64\avif*" PackagePath="runtimes\linux-x64\native\%(Filename)" />
-      <PackageFile Include="..\output\native\linux\x86\avif*" PackagePath="runtimes\linux-x86\native\%(Filename)" />
-      <PackageFile Include="..\output\native\linux\arm64\avif*" PackagePath="runtimes\linux-arm64\native\%(Filename)" />
-      <PackageFile Include="..\output\native\linux\arm\avif*" PackagePath="runtimes\linux-arm\native\%(Filename)" />
+      <PackageFile Include="../output/native/linux/x64/avif*" PackagePath="runtimes/linux-x64/native" />
+      <PackageFile Include="../output/native/linux/x86/avif*" PackagePath="runtimes/linux-x86/native" />
+      <PackageFile Include="../output/native/linux/arm64/avif*" PackagePath="runtimes/linux-arm64/native" />
+      <PackageFile Include="../output/native/linux/arm/avif*" PackagePath="runtimes/linux-arm/native" />
       <!-- Musl -->
-      <PackageFile Include="..\output\native\linux-musl\x64\avif*" PackagePath="runtimes\linux-musl-x64\native\%(Filename)" />
-      <PackageFile Include="..\output\native\linux-musl\x86\avif*" PackagePath="runtimes\linux-musl-x86\native\%(Filename)" />
-      <PackageFile Include="..\output\native\linux-musl\arm64\avif*" PackagePath="runtimes\linux-musl-arm64\native\%(Filename)" />
-      <PackageFile Include="..\output\native\linux-musl\arm\avif*" PackagePath="runtimes\linux-musl-arm\native\%(Filename)" />
+      <PackageFile Include="../output/native/linux-musl/x64/avif*" PackagePath="runtimes/linux-musl-x64/native" />
+      <PackageFile Include="../output/native/linux-musl/x86/avif*" PackagePath="runtimes/linux-musl-x86/native" />
+      <PackageFile Include="../output/native/linux-musl/arm64/avif*" PackagePath="runtimes/linux-musl-arm64/native" />
+      <PackageFile Include="../output/native/linux-musl/arm/avif*" PackagePath="runtimes/linux-musl-arm/native" />
   </ItemGroup>
 
   <ItemGroup>
