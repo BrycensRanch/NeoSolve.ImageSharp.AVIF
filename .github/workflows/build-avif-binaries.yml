@@ -158,7 +158,7 @@ jobs:
 
             # Determine runtime identifier family
             case "$os" in
-              windows) rid_family="win" ;;
+              windows) rid_family="windows" ;;
               macos)   rid_family="osx" ;;
               linux)
                 # try to detect musl if any ELF file inside says so
