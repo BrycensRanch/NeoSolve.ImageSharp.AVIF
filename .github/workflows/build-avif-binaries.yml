@@ -44,9 +44,6 @@ jobs:
           - os: windows-2025
             target: i386-windows-gnu
             rid: win-x86
-          - os: windows-11-arm
-            target: arm-windows-gnu
-            rid: win-arm
     steps:
       - name: Install dependencies (Linux / Alpine)
         if: runner.os == 'Linux'
