@@ -9,29 +9,44 @@ on:
 jobs:
   build:
     runs-on: ${{matrix.os}}
+    container: ${{matrix.container}}
     timeout-minutes: 65
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-26, macos-15-intel, windows-2025 ]
         target: [ default ] 
-#        include:
-#          - os: ubuntu-24.04
-#            target: linux-musl-x64
-#          - os: ubuntu-24.04
-#            target: linux-musl-x86
-#          - os: ubuntu-24.04
-#            target: linux-x86
-#          - os: ubuntu-24.04-arm
-#            target: linux-musl-arm64
-#          - os: ubuntu-24.04-arm
-#            target: linux-arm32
-#          - os: ubuntu-24.04-arm
-#            target: linux-musl-arm32
-#          - os: windows-2025
-#            target: win-x86
-#          - os: windows-11-arm
-#            target: win-arm
+        include:
+          - os: ubuntu-24.04
+            container: alpine:latest
+            target: default
+            rid: linux-musl-x64
+          - os: ubuntu-24.04
+            container: i386/alpine:latest
+            target: default
+            rid: linux-musl-x86
+          - os: ubuntu-24.04
+            container: ubuntu:22.04
+            target: i386-linux-gnu
+            rid: linux-x86
+          - os: ubuntu-24.04-arm
+            container: arm64v8/alpine:latest
+            target: default
+            rid: linux-musl-arm64
+          - os: ubuntu-24.04-arm
+            container: arm32v7/ubuntu:latest
+            target: default
+            rid: linux-arm32
+          - os: ubuntu-24.04-arm
+            container: arm32v7/alpine:latest
+            target: default
+            rid: linux-musl-arm32
+          - os: windows-2025
+            target: i386-windows-gnu
+            rid: win-x86
+          - os: windows-11-arm
+            target: arm-windows-gnu
+            rid: win-arm
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -75,11 +90,16 @@ jobs:
           -DAVIF_LIBYUV=LOCAL \
           -DAVIF_LIBSHARPYUV=LOCAL \
           -DAVIF_BUILD_APPS=ON \
+          -DAVIF_BUILD_EXAMPLES=OFF \
+          -DAVIF_BUILD_TESTS=OFF \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
           -DCMAKE_C_COMPILER_WORKS=1 \
           -DCMAKE_CXX_COMPILER_WORKS=1"
-
+          if [ "${{ matrix.target }}" != "default" ]; then
+          ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
+          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_FLAGS=--target=${{ matrix.target }} -DCMAKE_CXX_FLAGS=--target=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
+          fi
           if [ "${{ runner.os }}" = "Windows" ]; then
             # Switch to clang-cl and add Windows-specific options
             CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
@@ -133,10 +153,6 @@ jobs:
       - uses: actions/download-artifact@v6
         with:
           path: artifacts
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Install libs for test
-        run: sudo apt-get update && sudo apt-get install -y libyuv0 libavif-bin
       - name: Organize artifacts into runtime layout
         shell: bash
         run: |
