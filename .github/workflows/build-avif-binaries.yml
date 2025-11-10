@@ -55,12 +55,12 @@ jobs:
             apt-get update
             apt-get install -y \
               build-essential nasm cmake ninja-build \
-              libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev clang git npm
+              libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev pkg-config clang git npm
           elif command -v apk >/dev/null 2>&1; then
             apk update
             apk add --no-cache \
               build-base nasm cmake ninja \
-              libjpeg-turbo-dev libpng-dev tiff-dev libwebp-dev aom-dev libyuv-dev zlib-dev clang git npm
+              libjpeg-turbo-dev libpng-dev tiff-dev libwebp-dev aom-dev libyuv-dev zlib-dev pkgconf clang git npm 
           else
             echo "Unsupported Linux distro" >&2
             exit 1
