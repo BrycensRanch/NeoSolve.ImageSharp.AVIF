@@ -4,6 +4,7 @@
     <Version>1.3.0</Version>
     <Description>Avif encoding and decoding support via avifenc/avifdec binary (included) for ImageSharp</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+      <PackageId>BrycensRanch.NeoSolve.ImageSharp.AVIF</PackageId>
     <TargetFramework>net8.0</TargetFramework>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
