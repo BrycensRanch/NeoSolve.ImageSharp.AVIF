@@ -48,16 +48,27 @@ jobs:
             target: arm-windows-gnu
             rid: win-arm
     steps:
+      - name: Install dependencies (Linux / Alpine)
+        if: runner.os == 'Linux'
+        run: |
+          if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y \
+              build-essential nasm cmake ninja-build \
+              libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev clang git npm
+          elif command -v apk >/dev/null 2>&1; then
+            sudo apk update
+            sudo apk add --no-cache \
+              build-base nasm cmake ninja \
+              libjpeg-turbo-dev libpng-dev libtiff-dev libwebp-dev aom-dev libyuv-dev zlib-dev clang git npm
+          else
+            echo "Unsupported Linux distro" >&2
+            exit 1
+          fi
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           submodules: true
-
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential nasm cmake ninja-build libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev clang
       - name: Setup cmake
         if: runner.os != 'Linux'
         uses: jwlawson/actions-setup-cmake@v2
