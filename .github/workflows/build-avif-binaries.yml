@@ -106,7 +106,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_WORKS=1"
           if [ "${{ matrix.target }}" != "default" ]; then
           ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
-          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_FLAGS=--target=${{ matrix.target }} -DCMAKE_CXX_FLAGS=--target=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
+          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
           fi
           if [ "${{ runner.os }}" = "Windows" ]; then
             # Switch to clang-cl and add Windows-specific options
