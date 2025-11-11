@@ -24,12 +24,6 @@
                 <PackagePath>%(PackageFile.PackagePath)</PackagePath>
                 <Visible>false</Visible>
             </None>
-            <None Include="*.c">
-                <Pack>false</Pack>
-            </None>
-            <None Include="*avifgain*">
-                <Pack>false</Pack>
-            </None>
         </ItemGroup>
     </Target>
     

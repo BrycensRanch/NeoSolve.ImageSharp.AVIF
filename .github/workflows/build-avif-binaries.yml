@@ -93,6 +93,8 @@ jobs:
           -DCONFIG_PIC=1 \
           -DAVIF_LIBYUV=LOCAL \
           -DAVIF_LIBSHARPYUV=LOCAL \
+          -DAVIF_JPEG=LOCAL \
+          -DAVIF_ZLIBPNG=LOCAL \
           -DAVIF_BUILD_APPS=ON \
           -DAVIF_BUILD_EXAMPLES=OFF \
           -DAVIF_BUILD_TESTS=OFF \
@@ -104,17 +106,9 @@ jobs:
           ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
           CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
           fi
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            CMAKE_ARGS="$CMAKE_ARGS \
-            -DAVIF_JPEG=LOCAL \
-            -DAVIF_ZLIBPNG=LOCAL"
-          fi
           if [ "${{ runner.os }}" = "Windows" ]; then
             # Switch to clang-cl and add Windows-specific options
             CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
-            CMAKE_ARGS="$CMAKE_ARGS \
-            -DAVIF_JPEG=LOCAL \
-            -DAVIF_ZLIBPNG=LOCAL"
             if [ "${{ runner.arch }}" = "ARM64" ]; then
               CMAKE_ARGS="$CMAKE_ARGS -DENABLE_NEON=1 -DENABLE_SSE=0"
             fi
