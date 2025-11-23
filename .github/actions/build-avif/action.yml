@@ -13,12 +13,16 @@ outputs:
   arch:
     description: Extracted architecture
     value: ${{ steps.extract-arch.outputs.arch }}
+  artifacts:
+    description: Path to built artifacts
+    value: ''
 runs:
   using: composite
   steps:
     - name: Build libavif binaries
       shell: ${{inputs.shell}}
       run: |
+        [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
         CMAKE_ARGS="-DCMAKE_BUILD_TYPE=${{inputs.configuration}} \
         -DBUILD_SHARED_LIBS=OFF \
         -DAVIF_CODEC_AOM=LOCAL \
@@ -53,6 +57,7 @@ runs:
       id: collect-avif
       shell: ${{inputs.shell}}
       run: |
+        [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
         rm -f libavif/build/avifgain* libavif/build/*.c || true
         rm -f libavif/build/${{inputs.configuration}}/avifgain* libavif/build/${{inputs.configuration}}/*.c || true
         
@@ -67,7 +72,7 @@ runs:
             ARTIFACTS="libavif/build/${{inputs.configuration}}/avif*.exe"
           fi
         done
-        echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
+        echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_OUTPUT
 
     - name: Extract ARCH from target
       id: extract-arch

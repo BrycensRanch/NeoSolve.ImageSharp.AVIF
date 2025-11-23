@@ -45,7 +45,6 @@ jobs:
           prepare: |
             pkg install -y bash sudo
             chsh -s /usr/local/bin/bash
-            echo 'cd "$GITHUB_WORKSPACE"' >> /root/.bash_profile
 
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps
@@ -61,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: FreeBSD-${{ steps.build-avif.outputs.arch }}
-          path: ${{ env.ARTIFACTS }}
+          path: ${{steps.build-avif.outputs.artifacts}}
           if-no-files-found: error
   alpine:
     runs-on: ${{matrix.os}}
@@ -93,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: ${{runner.os}}-${{ steps.build-avif.outputs.arch }}-musl
-          path: ${{ env.ARTIFACTS }}
+          path: ${{steps.build-avif.outputs.artifacts}}
           if-no-files-found: error
   build:
     runs-on: ${{matrix.os}}
@@ -121,7 +120,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: ${{runner.os}}-${{ steps.build-avif.outputs.arch }}
-          path: ${{ env.ARTIFACTS }}
+          path: ${{steps.build-avif.outputs.artifacts}}
           if-no-files-found: error
   nuget:
     runs-on: ubuntu-latest
