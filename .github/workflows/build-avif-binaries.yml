@@ -174,7 +174,7 @@ jobs:
                   rid_family="linux"
                 fi
                 ;;
-              *) echo "Unknown OS: $os" && exit 1 ;;
+              *) rid_family="${os,,}" ;;
             esac
 
             dest="output/native/${rid_family}/${arch}"

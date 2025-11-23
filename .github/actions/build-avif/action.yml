@@ -55,9 +55,8 @@ runs:
 
     - name: Collect avif binaries
       id: collect-avif
-      shell: ${{inputs.shell}}
+      shell: bash
       run: |
-        [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
         rm -f libavif/build/avifgain* libavif/build/*.c || true
         rm -f libavif/build/${{inputs.configuration}}/avifgain* libavif/build/${{inputs.configuration}}/*.c || true
         
@@ -76,7 +75,7 @@ runs:
 
     - name: Extract ARCH from target
       id: extract-arch
-      shell: ${{inputs.shell}}
+      shell: bash
       run: |
         ARCH="${{ runner.arch }}"
         echo "ARCH=$ARCH" >> "$GITHUB_OUTPUT"
