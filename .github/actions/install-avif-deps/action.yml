@@ -1,0 +1,58 @@
+name: AVIF Build
+description: Build libavif binaries for different architectures and platforms.
+inputs:
+  configuration:
+    description: Build configuration (e.g., Release, Debug)
+    required: false
+    default: Release
+  shell:
+    description: Shell to use for running commands
+    required: false
+    default: bash
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      shell: ${{inputs.shell}}
+      run: |
+        if command -v apt-get >/dev/null 2>&1; then
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential nasm cmake ninja-build \
+            libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev pkg-config git clang
+        elif command -v pkg >/dev/null 2>&1; then
+          sudo apk update
+          sudo pkg install  \
+            nasm cmake ninja \
+            libjpeg-turbo png tiff webp aom libyuv pkgconf git llvm21
+        else
+        elif command -v apk >/dev/null 2>&1; then
+          sudo apk update
+          sudo apk add --no-cache \
+            build-base nasm cmake ninja \
+            libjpeg-turbo-dev libpng-dev tiff-dev libwebp-dev aom-dev libyuv-dev zlib-dev pkgconf git clang
+        else
+          echo "Unsupported Linux distro" >&2
+          exit 1
+        fi
+    - uses: lukka/get-cmake@latest
+      if: runner.os != 'Linux'
+      with:
+        useLocalCache: false
+        useCloudCache: false
+    - name: Set up nasm
+      if: runner.os != 'Linux'
+      uses: ilammy/setup-nasm@v1
+
+    - name: Install libraries
+      if: runner.os == 'Windows'
+      uses: johnwason/vcpkg-action@v7
+      id: vcpkg
+      env:
+        TRIPLET: ${{ runner.arch == 'X64' && 'x64-windows' || 'arm64-windows' }}
+      with:
+        token: ${{ github.token }}
+        cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
+        pkgs: libjpeg-turbo libpng zlib
+        triplet: ${{ env.TRIPLET }}

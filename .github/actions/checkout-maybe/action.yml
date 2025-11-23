@@ -1,0 +1,63 @@
+name: Checkout or Run
+description: >
+  Checks out the repository locally by default.
+  Can instead clone inside a Docker container or run a remote command on a VM.
+
+inputs:
+  shell:
+    description: Shell to use for running commands (e.g. bash, pwsh).
+    required: false
+    default: bash
+  mode:
+    description: |
+      Execution mode: "local" (default), "docker", or "remote".
+    required: false
+    default: local
+
+  docker-container:
+    description: Docker container name or ID (used when mode=docker).
+    required: false
+    default: ""
+
+  remote-command:
+    description: Full shell command to run remotely (used when mode=remote).
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    # Default local checkout
+    - name: Checkout repository locally
+      if: ${{ inputs.mode == 'local' }}
+      uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    # Docker mode: clone inside container
+    - name: Checkout repository inside Docker container
+      if: ${{ inputs.mode == 'docker' && inputs.docker-container != '' }}
+      shell: ${{inputs.shell}}
+      run: |
+        echo "Cloning repository inside container '${{ inputs.docker-container }}'..."
+        docker exec "${{ inputs.docker-container }}" bash -c "
+          set -e
+          if [ ! -d /opt/repo ]; then
+            echo 'Cloning with submodules...'
+            git clone --recurse-submodules https://github.com/${{ github.repository }} /opt/repo
+          else
+            echo 'Repository already exists, pulling latest changes...'
+            cd repo
+            git fetch --all
+            git reset --hard origin/${{ github.ref_name }}
+          fi
+        "
+
+    # Remote mode: run arbitrary command (e.g. ssh)
+    - name: Run remote command
+      if: ${{ inputs.mode == 'remote' && inputs.remote-command != '' }}
+      shell: ${{inputs.shell}}
+      run: |
+        echo "Running remote command:"
+        echo "${{ inputs.remote-command }}"
+        eval "${{ inputs.remote-command }}"

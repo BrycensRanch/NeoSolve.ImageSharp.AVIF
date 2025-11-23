@@ -7,6 +7,87 @@ on:
   workflow_dispatch: # Allows manual triggering  
 
 jobs:
+  freebsd:
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    steps:
+      - name: Get relevant env variable names
+        id: envnames
+        run: |
+          envs=$(printenv \
+            | cut -d= -f1 \
+            | grep -E '^(GITHUB|CI|ALLOW|KEY|API|Disable|Git)' \
+            | grep -v '^GITHUB_WORKSPACE$' \
+            | sort \
+            | tr '\n' ' ')
+          echo "envs=$envs" >> "$GITHUB_OUTPUT"
+      - name: Setup FreeBSD VM
+        id: vm
+        uses: vmactions/freebsd-vm@v1
+        with:
+          envs: ${{ steps.envnames.outputs.envs }}
+          # usesh: true
+          sync: sshfs
+          prepare: |
+            pkg install -y bash sudo
+            chsh -s /usr/local/bin/bash
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-avif-deps
+        with:
+          shell: freebsd {0}
+      - name: Checkout repository
+        uses: ./.github/actions/checkout-maybe
+        with:
+          shell: freebsd {0}
+      - name: Build
+        id: build-avif
+        uses: ./.github/actions/build-avif
+        with:
+          shell: freebsd {0}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: FreeBSD-${{ steps.build-avif.outputs.arch }}
+          path: ${{ env.ARTIFACTS }}
+          if-no-files-found: error
+  alpine:
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    steps:
+      - name: Setup Alpine Linux
+        uses: bgilbert/setup-alpine@aarch64
+        with:
+          packages: sudo bash
+      - name: Install dependencies
+        uses: ./.github/actions/install-avif-deps
+        with:
+          shell: alpine.sh {0}
+      - name: Checkout repository
+        uses: ./.github/actions/checkout-maybe
+        with:
+          shell: alpine.sh {0}
+      - name: Build
+        id: build-avif
+        uses: ./.github/actions/build-avif
+        with:
+          shell: alpine.sh {0}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{runner.os}}-${{ steps.build-avif.outputs.arch }}-musl
+          path: ${{ env.ARTIFACTS }}
+          if-no-files-found: error
   build:
     runs-on: ${{matrix.os}}
 #    container: ${{matrix.container}}
@@ -15,143 +96,22 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-26, macos-15-intel, windows-2025, windows-11-arm ]
-        target: [ default ] 
-#        include:
-#          - os: ubuntu-24.04
-#            container: alpine:latest
-#            target: default
-#            rid: linux-musl-x64
-#          - os: ubuntu-24.04
-#            container: i386/alpine:latest
-#            target: default
-#            rid: linux-musl-x86
-#          - os: ubuntu-24.04
-#            container: ubuntu:22.04
-#            target: i386-linux-gnu
-#            rid: linux-x86
-#          - os: ubuntu-24.04-arm
-#            container: arm64v8/alpine:latest
-#            target: default
-#            rid: linux-musl-arm64
-#          - os: ubuntu-24.04-arm
-#            container: arm32v7/ubuntu:latest
-#            target: default
-#            rid: linux-arm32
-#          - os: ubuntu-24.04-arm
-#            container: arm32v7/alpine:latest
-#            target: default
-#            rid: linux-musl-arm32
+        target: [ default ]
     steps:
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          if command -v apt-get >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y \
-              build-essential nasm cmake ninja-build \
-              libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev pkg-config git clang
-          elif command -v apk >/dev/null 2>&1; then
-            sudo apk update
-            sudo apk add --no-cache \
-              build-base nasm cmake ninja \
-              libjpeg-turbo-dev libpng-dev tiff-dev libwebp-dev aom-dev libyuv-dev zlib-dev pkgconf git clang
-          else
-            echo "Unsupported Linux distro" >&2
-            exit 1
-          fi
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          submodules: true
-      - uses: lukka/get-cmake@latest
-        if: runner.os != 'Linux'
-        with:
-          useLocalCache: false
-          useCloudCache: false
-      - name: Set up nasm
-        if: runner.os != 'Linux'
-        uses: ilammy/setup-nasm@v1
+        uses: ./.github/actions/checkout-maybe
 
-      - name: Install libraries
-        if: runner.os == 'Windows'
-        uses: johnwason/vcpkg-action@v7
-        id: vcpkg
-        env:
-          TRIPLET: ${{ runner.arch == 'X64' && 'x64-windows' || 'arm64-windows' }}
-        with:
-          token: ${{ github.token }}
-          cache-key: ${{ hashFiles('libavif/cmake/Modules/*', 'libavif/ext/*.cmd', 'libavif/ext/*.sh') }}
-          pkgs: libjpeg-turbo libpng zlib
-          triplet: ${{ env.TRIPLET }}
-
-      - name: Build libavif binaries
-        shell: bash
-        run: |
-          CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release \
-          -DBUILD_SHARED_LIBS=OFF \
-          -DAVIF_CODEC_AOM=LOCAL \
-          -DCONFIG_PIC=1 \
-          -DAVIF_LIBYUV=LOCAL \
-          -DAVIF_LIBSHARPYUV=LOCAL \
-          -DAVIF_JPEG=LOCAL \
-          -DAVIF_ZLIBPNG=LOCAL \
-          -DAVIF_BUILD_APPS=ON \
-          -DAVIF_BUILD_EXAMPLES=OFF \
-          -DAVIF_BUILD_TESTS=OFF \
-          -DCMAKE_C_COMPILER=clang \
-          -DCMAKE_CXX_COMPILER=clang++ \
-          -DCMAKE_C_COMPILER_WORKS=1 \
-          -DCMAKE_CXX_COMPILER_WORKS=1"
-          if [ "${{ matrix.target }}" != "default" ]; then
-          ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
-          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
-          fi
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            # Switch to clang-cl and add Windows-specific options
-            CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
-            if [ "${{ runner.arch }}" = "ARM64" ]; then
-              CMAKE_ARGS="$CMAKE_ARGS -DENABLE_NEON=1 -DENABLE_SSE=0"
-            fi
-          fi
-
-          cmake -S libavif -B libavif/build $CMAKE_ARGS
-          cmake --build libavif/build --config Release --parallel
-
-      - name: Collect avif binaries
-        id: collect-avif
-        shell: bash
-        run: |
-          rm -f libavif/build/avifgain* libavif/build/*.c || true
-          rm -f libavif/build/Release/avifgain* libavif/build/Release/*.c || true
-
-          ARTIFACTS=""
-          for f in libavif/build/avif*; do
-            if [[ -f "$f" && "$f" != *.* ]]; then
-              ARTIFACTS="libavif/build/avif*"
-            fi
-          done
-          for f in libavif/build/Release/avif*.exe; do
-            if [[ -f "$f" ]]; then
-              ARTIFACTS="libavif/build/Release/avif*.exe"
-            fi
-          done
-          echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
-
-      - name: Extract ARCH from target
-        id: extract-arch
-        shell: bash
-        run: |
-          if [ "${{ matrix.target }}" = "default" ]; then
-            ARCH="${{ runner.arch }}"
-          else
-            ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
-          fi
-          echo "ARCH=$ARCH" >> "$GITHUB_OUTPUT"
+      - name: Install dependencies
+        uses: ./.github/actions/install-avif-deps
+        
+      - name: Build 
+        id: build-avif
+        uses: ./.github/actions/build-avif
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
-          name: ${{runner.os}}-${{ steps.extract-arch.outputs.ARCH }}
+          name: ${{runner.os}}-${{ steps.build-avif.outputs.arch }}
           path: ${{ env.ARTIFACTS }}
           if-no-files-found: error
   nuget:
@@ -160,9 +120,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          submodules: true
+        uses: ./.github/actions/checkout-maybe
       - uses: actions/download-artifact@v6
         with:
           path: artifacts

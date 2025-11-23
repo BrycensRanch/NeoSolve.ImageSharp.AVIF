@@ -1,0 +1,81 @@
+name: AVIF Build
+description: Build libavif binaries for different architectures and platforms.
+inputs:
+  configuration:
+    description: Build configuration (e.g., Release, Debug)
+    required: false
+    default: Release
+  shell:
+    description: Shell to use for running commands
+    required: false
+    default: bash
+outputs:
+  arch:
+    description: Extracted architecture
+    value: ${{ steps.extract-arch.outputs.arch }}
+runs:
+  using: composite
+  steps:
+    - name: Build libavif binaries
+      shell: ${{inputs.shell}}
+      run: |
+        CMAKE_ARGS="-DCMAKE_BUILD_TYPE=${{inputs.configuration}} \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DAVIF_CODEC_AOM=LOCAL \
+        -DCONFIG_PIC=1 \
+        -DAVIF_LIBYUV=LOCAL \
+        -DAVIF_LIBSHARPYUV=LOCAL \
+        -DAVIF_JPEG=LOCAL \
+        -DAVIF_ZLIBPNG=LOCAL \
+        -DAVIF_BUILD_APPS=ON \
+        -DAVIF_BUILD_EXAMPLES=OFF \
+        -DAVIF_BUILD_TESTS=OFF \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_C_COMPILER_WORKS=1 \
+        -DCMAKE_CXX_COMPILER_WORKS=1"
+        if [ "${{ matrix.target }}" != "default" ]; then
+        ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
+        CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
+        fi
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          # Switch to clang-cl and add Windows-specific options
+          CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
+          if [ "${{ runner.arch }}" = "ARM64" ]; then
+            CMAKE_ARGS="$CMAKE_ARGS -DENABLE_NEON=1 -DENABLE_SSE=0"
+          fi
+        fi
+        
+        cmake -S libavif -B libavif/build $CMAKE_ARGS
+        cmake --build libavif/build --config ${{inputs.configuration}} --parallel
+
+    - name: Collect avif binaries
+      id: collect-avif
+      shell: ${{inputs.shell}}
+      run: |
+        rm -f libavif/build/avifgain* libavif/build/*.c || true
+        rm -f libavif/build/${{inputs.configuration}}/avifgain* libavif/build/${{inputs.configuration}}/*.c || true
+        
+        ARTIFACTS=""
+        for f in libavif/build/avif*; do
+          if [[ -f "$f" && "$f" != *.* ]]; then
+            ARTIFACTS="libavif/build/avif*"
+          fi
+        done
+        for f in libavif/build/${{inputs.configuration}}/avif*.exe; do
+          if [[ -f "$f" ]]; then
+            ARTIFACTS="libavif/build/${{inputs.configuration}}/avif*.exe"
+          fi
+        done
+        echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
+
+    - name: Extract ARCH from target
+      id: extract-arch
+      shell: ${{inputs.shell}}
+      run: |
+        if [ "${{ matrix.target }}" = "default" ]; then
+          ARCH="${{ runner.arch }}"
+        else
+          ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
+        fi
+        echo "ARCH=$ARCH" >> "$GITHUB_OUTPUT"
