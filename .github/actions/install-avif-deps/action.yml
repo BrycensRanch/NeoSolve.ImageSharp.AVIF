@@ -23,7 +23,7 @@ runs:
             libjpeg-dev libpng-dev libtiff-dev libwebp-dev libaom-dev libyuv-dev zlib1g-dev pkg-config git clang
         elif command -v pkg >/dev/null 2>&1; then
           sudo apk update
-          sudo pkg install  \
+          sudo pkg install -y  \
             nasm cmake ninja \
             libjpeg-turbo png tiff webp aom libyuv pkgconf git llvm21
         elif command -v apk >/dev/null 2>&1; then
