@@ -26,7 +26,6 @@ runs:
           sudo pkg install  \
             nasm cmake ninja \
             libjpeg-turbo png tiff webp aom libyuv pkgconf git llvm21
-        else
         elif command -v apk >/dev/null 2>&1; then
           sudo apk update
           sudo apk add --no-cache \
