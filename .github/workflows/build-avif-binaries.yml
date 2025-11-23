@@ -15,21 +15,31 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
     steps:
+      - name: Checkout repository locally
+        uses: actions/checkout@v5
+        with:
+          submodules: true
       - name: Get relevant env variable names
         id: envnames
         run: |
-          envs=$(printenv \
-            | cut -d= -f1 \
-            | grep -E '^(GITHUB|CI|ALLOW|KEY|API|Disable|Git)' \
-            | grep -v '^GITHUB_WORKSPACE$' \
-            | sort \
-            | tr '\n' ' ')
-          echo "envs=$envs" >> "$GITHUB_OUTPUT"
+            envs=$(printenv \
+              | cut -d= -f1 \
+              | grep -E '^(GITHUB|CI|ALLOW|KEY|API|Disable|Git)' \
+              | grep -v '^GITHUB_WORKSPACE$' \
+              | sort \
+              | tr '\n' ' ')
+            echo "envs=$envs" >> "$GITHUB_OUTPUT"
+      - name: Get Arch
+        id: get-arch
+        run: |
+          arch=$(uname -m)
+          echo "arch=$arch" >> "$GITHUB_OUTPUT"
       - name: Setup FreeBSD VM
         id: vm
         uses: vmactions/freebsd-vm@v1
         with:
           envs: ${{ steps.envnames.outputs.envs }}
+          arch: ${{ steps.get-arch.outputs.arch }}
           # usesh: true
           sync: sshfs
           prepare: |
@@ -38,10 +48,6 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps
-        with:
-          shell: freebsd {0}
-      - name: Checkout repository
-        uses: ./.github/actions/checkout-maybe
         with:
           shell: freebsd {0}
       - name: Build
@@ -64,16 +70,16 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
     steps:
+      - name: Checkout repository locally
+        uses: actions/checkout@v5
+        with:
+          submodules: true
       - name: Setup Alpine Linux
         uses: bgilbert/setup-alpine@aarch64
         with:
           packages: sudo bash
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps
-        with:
-          shell: alpine.sh {0}
-      - name: Checkout repository
-        uses: ./.github/actions/checkout-maybe
         with:
           shell: alpine.sh {0}
       - name: Build
@@ -98,8 +104,10 @@ jobs:
         os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-26, macos-15-intel, windows-2025, windows-11-arm ]
         target: [ default ]
     steps:
-      - name: Checkout repository
-        uses: ./.github/actions/checkout-maybe
+      - name: Checkout repository locally
+        uses: actions/checkout@v5
+        with:
+          submodules: true
 
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps
@@ -119,8 +127,10 @@ jobs:
     timeout-minutes: 65
     needs: build
     steps:
-      - name: Checkout repository
-        uses: ./.github/actions/checkout-maybe
+      - name: Checkout repository locally
+        uses: actions/checkout@v5
+        with:
+          submodules: true
       - uses: actions/download-artifact@v6
         with:
           path: artifacts
