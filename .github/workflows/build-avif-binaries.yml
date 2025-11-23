@@ -45,6 +45,7 @@ jobs:
           prepare: |
             pkg install -y bash sudo
             chsh -s /usr/local/bin/bash
+            echo 'cd "$GITHUB_WORKSPACE"' >> /root/.bash_profile
 
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps
@@ -125,7 +126,7 @@ jobs:
   nuget:
     runs-on: ubuntu-latest
     timeout-minutes: 65
-    needs: build
+    needs: [build, alpine, freebsd]
     steps:
       - name: Checkout repository locally
         uses: actions/checkout@v5
