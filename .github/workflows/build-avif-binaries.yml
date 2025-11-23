@@ -45,6 +45,7 @@ jobs:
           prepare: |
             pkg install -y bash sudo
             chsh -s /usr/local/bin/bash
+            ln -sf /usr/local/bin/gmake /usr/bin/make
 
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps
@@ -102,7 +103,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-26, macos-15-intel, windows-2025, windows-11-arm ]
-        target: [ default ]
     steps:
       - name: Checkout repository locally
         uses: actions/checkout@v5
@@ -119,7 +119,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
-          name: ${{runner.os}}-${{ steps.build-avif.outputs.arch }}
+          name: ${{runner.os}}${{ steps.build-avif.outputs.arch }}
           path: ${{steps.build-avif.outputs.artifacts}}
           if-no-files-found: error
   nuget:
