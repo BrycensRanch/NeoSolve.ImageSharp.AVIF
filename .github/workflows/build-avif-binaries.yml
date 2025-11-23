@@ -46,6 +46,12 @@ jobs:
             pkg install -y bash sudo
             chsh -s /usr/local/bin/bash
             ln -sf /usr/local/bin/gmake /usr/bin/make
+            pw useradd runner -u 1001 -m -s /usr/local/bin/bash
+            pw groupmod wheel -m runner
+            echo "runner ALL=(ALL) NOPASSWD: ALL" > /usr/local/etc/sudoers.d/runner
+            chmod 440 /usr/local/etc/sudoers.d/runner
+            chown -R runner:runner "$GITHUB_WORKSPACE"
+            chmod g+s "$GITHUB_WORKSPACE"
 
       - name: Install dependencies
         uses: ./.github/actions/install-avif-deps

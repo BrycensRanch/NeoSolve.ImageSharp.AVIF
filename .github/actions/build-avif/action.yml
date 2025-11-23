@@ -15,7 +15,7 @@ outputs:
     value: ${{ steps.extract-arch.outputs.arch }}
   artifacts:
     description: Path to built artifacts
-    value: ''
+    value: ${{ steps.collect-avif.outputs.artifacts }}
 runs:
   using: composite
   steps:
@@ -23,6 +23,9 @@ runs:
       shell: ${{inputs.shell}}
       run: |
         [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
+        if [ "$(uname -s)" = "FreeBSD" ]; then
+          exec su - runner
+        fi
         CMAKE_ARGS="-DCMAKE_BUILD_TYPE=${{inputs.configuration}} \
         -DBUILD_SHARED_LIBS=OFF \
         -DAVIF_CODEC_AOM=LOCAL \
