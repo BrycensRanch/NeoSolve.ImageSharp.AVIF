@@ -78,9 +78,5 @@ runs:
       id: extract-arch
       shell: ${{inputs.shell}}
       run: |
-        if [ "${{ matrix.target }}" = "default" ]; then
-          ARCH="${{ runner.arch }}"
-        else
-          ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
-        fi
+        ARCH="${{ runner.arch }}"
         echo "ARCH=$ARCH" >> "$GITHUB_OUTPUT"
