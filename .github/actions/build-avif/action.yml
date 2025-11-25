@@ -24,7 +24,7 @@ runs:
       run: |
         [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
         if [ "$(uname -s)" = "FreeBSD" ]; then
-          exec su - runner
+          exec su runner -m -c "/usr/local/bin/bash"
         fi
         CMAKE_ARGS="-DCMAKE_BUILD_TYPE=${{inputs.configuration}} \
         -DBUILD_SHARED_LIBS=OFF \
