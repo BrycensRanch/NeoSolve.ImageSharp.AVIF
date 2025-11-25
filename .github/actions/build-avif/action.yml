@@ -23,17 +23,14 @@ runs:
       id: write-script
       shell: bash
       run: |
-        cd "$GITHUB_WORKSPACE"
+        [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
 
         cat > build.sh << 'EOF'
         #!/usr/bin/env bash
         set -euo pipefail
 
-        [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
-
-        # Switch to runner user when on FreeBSD
         if [ "$(uname -s)" = "FreeBSD" ] && [ "$(id -u)" -eq 0 ]; then
-          exec su runner -m -c "/usr/local/bin/bash $GITHUB_WORKSPACE/build.sh"
+          exec sudo -u runner /usr/local/bin/bash "$0"
         fi
 
         CMAKE_ARGS="-DCMAKE_BUILD_TYPE=${{inputs.configuration}} \
