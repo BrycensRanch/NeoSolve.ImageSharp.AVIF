@@ -49,6 +49,16 @@ runs:
         -DCMAKE_C_COMPILER_WORKS=1 \
         -DCMAKE_CXX_COMPILER_WORKS=1"
 
+        # CPU detect does not support FreeBSD ARM64
+        if [ "$(uname -s)" = "FreeBSD" ] && [ "$(uname -m)" = "aarch64" ]; then
+          CMAKE_ARGS="$CMAKE_ARGS \
+            -DCONFIG_RUNTIME_CPU_DETECT=0 \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DENABLE_X86=OFF \
+            -DENABLE_SSE=0 \
+            -DENABLE_AVX=0 \
+            -DENABLE_NEON=1"
+        fi
         if [ "${{ matrix.target }}" != "default" ]; then
           ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
           CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
