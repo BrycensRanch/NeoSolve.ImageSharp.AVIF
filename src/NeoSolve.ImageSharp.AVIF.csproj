@@ -49,6 +49,9 @@
       <PackageFile Include="../output/native/linux-musl/x86/avif*" PackagePath="runtimes/linux-musl-x86/native" />
       <PackageFile Include="../output/native/linux-musl/arm64/avif*" PackagePath="runtimes/linux-musl-arm64/native" />
       <PackageFile Include="../output/native/linux-musl/arm/avif*" PackagePath="runtimes/linux-musl-arm/native" />
+      <!-- FreeBSD -->
+            <PackageFile Include="../output/native/freebsd/arm64/avif*" PackagePath="runtimes/freebsd-arm64/native" />
+      <PackageFile Include="../output/native/freebsd/x64/avif*" PackagePath="runtimes/freebsd-x64/native" />
   </ItemGroup>
 
   <ItemGroup>
