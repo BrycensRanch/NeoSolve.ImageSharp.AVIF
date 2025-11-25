@@ -19,13 +19,23 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Build libavif binaries
-      shell: ${{inputs.shell}}
+    - name: Write build script
+      id: write-script
+      shell: bash
       run: |
+        cd "$GITHUB_WORKSPACE"
+
+        cat > build.sh << 'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+
         [ -n "$GITHUB_WORKSPACE" ] && cd "$GITHUB_WORKSPACE"
-        if [ "$(uname -s)" = "FreeBSD" ]; then
-          exec su runner -m -c "/usr/local/bin/bash"
+
+        # Switch to runner user when on FreeBSD
+        if [ "$(uname -s)" = "FreeBSD" ] && [ "$(id -u)" -eq 0 ]; then
+          exec su runner -m -c "/usr/local/bin/bash $GITHUB_WORKSPACE/build.sh"
         fi
+
         CMAKE_ARGS="-DCMAKE_BUILD_TYPE=${{inputs.configuration}} \
         -DBUILD_SHARED_LIBS=OFF \
         -DAVIF_CODEC_AOM=LOCAL \
@@ -41,10 +51,12 @@ runs:
         -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_C_COMPILER_WORKS=1 \
         -DCMAKE_CXX_COMPILER_WORKS=1"
+
         if [ "${{ matrix.target }}" != "default" ]; then
-        ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
-        CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
+          ARCH=$(echo "${{ matrix.target }}" | cut -d'-' -f1)
+          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_COMPILER_TARGET=${{ matrix.target }} -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.target }} -DAOM_TARGET_CPU=$ARCH"
         fi
+
         if [ "${{ runner.os }}" = "Windows" ]; then
           # Switch to clang-cl and add Windows-specific options
           CMAKE_ARGS=$(echo "$CMAKE_ARGS" | sed 's/clang++/clang-cl/g' | sed 's/clang/clang-cl/g')
@@ -52,9 +64,17 @@ runs:
             CMAKE_ARGS="$CMAKE_ARGS -DENABLE_NEON=1 -DENABLE_SSE=0"
           fi
         fi
-        
+
         cmake -S libavif -B libavif/build $CMAKE_ARGS
         cmake --build libavif/build --config ${{inputs.configuration}} --parallel
+        EOF
+
+        chmod +x build.sh
+    - name: Build libavif binaries
+      shell: ${{ inputs.shell }}
+      run: |
+        cd "$GITHUB_WORKSPACE"
+        ./build.sh
 
     - name: Collect avif binaries
       id: collect-avif
